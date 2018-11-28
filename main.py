@@ -4,6 +4,7 @@ Created on Nov 26, 2018
 '''
 #!/usr/bin/env python3
 # boilerplate code by Jon May (jonmay@isi.edu)
+from __future__ import print_function
 import argparse
 import sys
 import codecs
@@ -13,6 +14,8 @@ else:
     izip = zip
 import os.path
 import gzip
+import numpy as np
+from sklearn import metrics
 
 scriptdir = os.path.dirname(os.path.abspath(__file__))
 
@@ -34,7 +37,11 @@ def load_json(infile):
     return texts, labels
 
 def prediction_metrics(labels, truths):
-    pass
+    truths_np = np.array(truths)    
+    accuracy = np.mean(truths_np == labels)
+    
+    print("Accuracy: ", accuracy)
+    print(metrics.classification_report(truths_np, labels, target_names=['SFW', 'NSFW']))
     
     
 def prepfile(fh, code):
@@ -59,8 +66,7 @@ def addonoffarg(parser, arg, dest=None, default=True, _help="TODO"):
     group.add_argument('--no-%s' % arg, dest=dest, action='store_false', default=default, help="See --%s" % arg)
 
 def main():
-    from sklearn import metrics
-    from classifier import LogisticRegressionClassifier
+    from classifier import LinearSVM as Classifier
     
     parser = argparse.ArgumentParser(
         description="Classifying NSFW or not", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -78,24 +84,11 @@ def main():
     
     texts, labels = load_json(infile)
     
-    for i in range(len(texts)):
-        print(labels[i], texts[i])
-        break
-
-    
-    lrc = LogisticRegressionClassifier()
+    lrc = Classifier()
     lrc.train(texts, labels)
     predictions = lrc.predict(texts)
-        
-    count = 0
-    for i in range(len(labels)):
-        if labels[i] == predictions[i] and labels[i]:
-            count += 1
-            print(labels[i], predictions[i])
     
-    print(count)
-    
-    
+    prediction_metrics(predictions, labels)
     
 #     outfile = prepfile(args.outfile, 'w')
 #     for line in infile:

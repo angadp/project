@@ -15,20 +15,21 @@ class Classifier():
         pass
 
 
-class TFIDF(Classifier):
+class LinearSVM(Classifier):
     def __init__(self):
         self.clf = None
 
-    def train(self, list, categories):
+    def train(self, texts, labels):
         from sklearn.feature_extraction.text import TfidfVectorizer
         from sklearn.linear_model import SGDClassifier
         from sklearn.pipeline import Pipeline
 
-        text_clf = text_clf = Pipeline([('vect', TfidfVectorizer(lowercase=True, min_df=3, analyzer="word", ngram_range=(1, 3))),
-                         ('clf', SGDClassifier(loss='hinge', alpha=1e-3, n_iter=5, penalty='l2', random_state=42))])
-        self.clf = text_clf.fit(list, categories)
+        text_clf = Pipeline([('vect', TfidfVectorizer(lowercase=True, min_df=3, analyzer="word", ngram_range=(1, 3))),
+                         ('clf', SGDClassifier(alpha=1e-3, n_iter=5, penalty='l2', random_state=42))])
+        self.clf = text_clf.fit(texts, labels)
 
     def predict(self, words):
+        assert self.classifier != None
         return self.clf.predict(words)
 
 class LogisticRegressionClassifier(Classifier):
