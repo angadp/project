@@ -13,7 +13,23 @@ class Classifier():
     def predict(self, texts): 
         """Make predictions using the learned model"""
         pass
-    
+
+
+class TFIDF(Classifier):
+    def __init__(self):
+        self.clf = None
+
+    def train(self, list, categories):
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        from sklearn.linear_model import SGDClassifier
+        from sklearn.pipeline import Pipeline
+
+        text_clf = text_clf = Pipeline([('vect', TfidfVectorizer(lowercase=True, min_df=3, analyzer="word", ngram_range=(1, 3))),
+                         ('clf', SGDClassifier(loss='hinge', alpha=1e-3, n_iter=5, penalty='l2', random_state=42))])
+        self.clf = text_clf.fit(list, categories)
+
+    def predict(self, words):
+        return self.clf.predict(words)
 
 class LogisticRegressionClassifier(Classifier):
     
