@@ -3,7 +3,19 @@ Created on Nov 27, 2018
 @author: ishank
 '''
 
-class LogisticRegressionClassifier():
+class Classifier():
+    """Parent class for classifiers"""
+    
+    def train(self, texts, labels):
+        """Learn the parameters of the model from the given labeled data."""
+        pass
+    
+    def predict(self, texts): 
+        """Make predictions using the learned model"""
+        pass
+    
+
+class LogisticRegressionClassifier(Classifier):
     
     def __init__(self):
         self.classifier = None
@@ -21,9 +33,9 @@ class LogisticRegressionClassifier():
         
         return self.classifier
     
-    def predict(self, text):        
+    def predict(self, texts):        
         assert self.classifier != None
-        return self.classifier.predict(text)
+        return self.classifier.predict(texts)
         
             
     

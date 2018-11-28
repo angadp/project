@@ -32,6 +32,10 @@ def load_json(infile):
         print("Failed to load JSON data. ", e)
     
     return texts, labels
+
+def prediction_metrics(labels, truths):
+    pass
+    
     
 def prepfile(fh, code):
     if type(fh) is str:
@@ -55,6 +59,9 @@ def addonoffarg(parser, arg, dest=None, default=True, _help="TODO"):
     group.add_argument('--no-%s' % arg, dest=dest, action='store_false', default=default, help="See --%s" % arg)
 
 def main():
+    from sklearn import metrics
+    from classifier import LogisticRegressionClassifier
+    
     parser = argparse.ArgumentParser(
         description="Classifying NSFW or not", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     
@@ -75,12 +82,11 @@ def main():
         print(labels[i], texts[i])
         break
 
-    from classifier import LogisticRegressionClassifier
     
     lrc = LogisticRegressionClassifier()
     lrc.train(texts, labels)
     predictions = lrc.predict(texts)
-    
+        
     count = 0
     for i in range(len(labels)):
         if labels[i] == predictions[i] and labels[i]:
