@@ -107,6 +107,20 @@ class LogisticRegressionClassifier(Classifier):
         assert self.classifier != None
         return self.classifier.predict(texts)
         
-            
-    
-
+class NaiveClassifier(Classifier):
+    def __init__(self):
+        self.classifier = None
+        
+    def predict(self,texts,labels):
+        with open('badwords.txt', 'r') as f:
+            x = f.readlines()
+            #to remove \n from list elements    
+        b_words=list(map(str.strip,x))
+        predicted = []
+        for i in texts:
+            currentWords = i.lower().split(" ")
+            if len(set(currentWords).intersection(set(b_words))) > 0:
+                predicted.append(1)
+            else:
+                predicted.append(0)
+        return(predicted)        
