@@ -8,10 +8,32 @@ import json
 # tokenizer = RegexpTokenizer(r'\w+')
 # print(tokenizer.tokenize('Eighty-seven miles to go, yet.  Onward!'))
 
-
-with open("data/results5k_int.txt", 'w') as r5k:
-    data = json.load(open("data/results5k.txt", 'r'))
+count = 0
+nsfw_data, all_data = [], []
+with open("data/results10k_int.txt", 'w') as r5k:
+    
+    data = json.load(open("data/results_nsfw.txt", 'r'))
     for row in data:
         if row['NSFW'] == 'True':
-            print(row['title'])
+            nsfw_data.append({
+                "title": str(row['title']),
+                "NSFW": str(row['NSFW']),
+                "text": str(row['text'])
+            })
+            
+    data = json.load(open("data/results10k.txt", 'r'))
+    for row in data:
+        count += 1
+        all_data.append({
+            "title": str(row['title']),
+            "NSFW": str(row['NSFW']),
+            "text": str(row['text'])
+        })
         
+        if count % 48 == 0:
+            if nsfw_data:
+                all_data.append(nsfw_data.pop())
+            
+    r5k.write(json.dumps(all_data))
+print(len(all_data))
+            

@@ -25,8 +25,8 @@ class LinearSVM(Classifier):
         from sklearn.linear_model import SGDClassifier
         from sklearn.pipeline import Pipeline
 
-        clf = Pipeline([('word_vec', TfidfVectorizer(lowercase=True, min_df=3, analyzer="word", ngram_range=(1, 3))),
-                         ('clf', SGDClassifier(alpha=1e-3, n_iter=10, penalty='l2', random_state=42))])
+        clf = Pipeline([('word_vec', TfidfVectorizer(lowercase=True, min_df=5, analyzer="word", ngram_range=(1, 3))),
+                         ('clf', SGDClassifier(alpha=5e-5, n_iter=15, penalty='l2', random_state=42))])
         self.classifier = clf.fit(texts, labels)
 
     def predict(self, words):
@@ -73,10 +73,10 @@ class word2Vec(Classifier):
         self.model = Word2Vec(tok, window=5, min_count=3, workers=4)
         model = Word2Vec(tok, window=5, min_count=3, workers=4)
         train_vecs = self.w2vectorize(texts, model, 100)
-        classifier = SGDClassifier(loss='log', penalty='l1')
+        classifier = SGDClassifier(loss='log', penalty='l2')
         classifier.fit(train_vecs, labels)
 
-        self.classifier =classifier
+        self.classifier = classifier
 
 
     def predict(self, words):
@@ -93,10 +93,10 @@ class LogisticRegressionClassifier(Classifier):
     def train(self, texts, labels):
         from sklearn.feature_extraction.text import TfidfVectorizer
         from sklearn.pipeline import Pipeline 
-        from sklearn.linear_model import LogisticRegression
+        from sklearn.linear_model import LogisticRegressionCV
         
-        word_vec = TfidfVectorizer(lowercase=True, ngram_range=(1, 3), analyzer="word", binary=False, min_df=3)
-        clf = LogisticRegression(tol=1e-8, penalty='l2', C=4)
+        word_vec = TfidfVectorizer(lowercase=True, ngram_range=(1, 3), analyzer="word", binary=False, min_df=5)
+        clf = LogisticRegressionCV(tol=1e-9, penalty='l2', random_state=0, solver='lbfgs', max_iter=2000)
         
         classifier = Pipeline([('word_vec', word_vec), ('clf', clf)])
         self.classifier = classifier.fit(texts, labels)
@@ -115,17 +115,20 @@ class EnsembleVotingClassifier(Classifier):
     def train(self, texts, labels):
         from sklearn.feature_extraction.text import TfidfVectorizer
         from sklearn.pipeline import Pipeline 
-        from sklearn.ensemble import VotingClassifier
-        from sklearn.linear_model import SGDClassifier, LogisticRegression
+        from sklearn.ensemble import VotingClassifier, AdaBoostClassifier, RandomForestClassifier
+        from sklearn.linear_model import LogisticRegression
+
+        rdf_clf = Pipeline([('word_vec', TfidfVectorizer(lowercase=True, ngram_range=(1, 3), analyzer="word", min_df=5)),
+                      ('clf', RandomForestClassifier(random_state=42, n_estimators=15))])        
         
-        svm_clf = Pipeline([('word_vec', TfidfVectorizer(lowercase=True, ngram_range=(1, 3), analyzer="word", min_df=3)),
-                      ('clf', SGDClassifier(loss='log', penalty='l2', alpha=1e-3, n_iter=5, random_state=42))])
+        adb_clf = Pipeline([('word_vec', TfidfVectorizer(lowercase=True, ngram_range=(1, 3), analyzer="word", min_df=5)),
+                      ('clf', AdaBoostClassifier(random_state=42, learning_rate=0.6, n_estimators=100))])
+                
+        log_clf = Pipeline([('word_vec', TfidfVectorizer(lowercase=True, ngram_range=(1, 3), analyzer="word", binary=False, min_df=5)),
+                      ('clf', LogisticRegression(tol=1e-9, penalty='l2', C=5))])
         
-        log_clf = Pipeline([('word_vec', TfidfVectorizer(lowercase=True, ngram_range=(1, 3), analyzer="word", binary=False, min_df=3)),
-                      ('clf', LogisticRegression(tol=1e-8, penalty='l2', C=4))])
-        
-        vot_clf = VotingClassifier(estimators=[('svm', svm_clf), ('log', log_clf)],
-                                        voting='soft', weights=[1,6])
+        vot_clf = VotingClassifier(estimators=[('svm', adb_clf), ('log', log_clf), ('rdf', rdf_clf)],
+                                        voting='soft', weights=[1,7,1])
         
         self.classifier = vot_clf.fit(texts, labels)
         return self.classifier
@@ -134,21 +137,63 @@ class EnsembleVotingClassifier(Classifier):
         assert self.classifier != None
         return self.classifier.predict(texts)
         
-
-class NaiveClassifier(Classifier):
+class AdaboostClassifier(Classifier):
+    
     def __init__(self):
         self.classifier = None
         
-    def predict(self,texts,labels):
+    def train(self, texts, labels):
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        from sklearn.pipeline import Pipeline 
+        from sklearn.ensemble import AdaBoostClassifier
+
+        classifier = Pipeline([('word_vec', TfidfVectorizer(lowercase=True, ngram_range=(1, 3), analyzer="word", min_df=5)),
+                      ('clf', AdaBoostClassifier(random_state=42, learning_rate=0.6, n_estimators=100))])
+                
+        self.classifier = classifier.fit(texts, labels)
+        return self.classifier
+        
+    def predict(self, texts):        
+        assert self.classifier != None
+        return self.classifier.predict(texts)
+    
+class RandomForestClassifier(Classifier):
+    
+    def __init__(self):
+        self.classifier = None
+        
+    def train(self, texts, labels):
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        from sklearn.pipeline import Pipeline 
+        from sklearn.ensemble import RandomForestClassifier
+
+        classifier = Pipeline([('word_vec', TfidfVectorizer(lowercase=True, ngram_range=(1, 3), analyzer="word", min_df=5)),
+                      ('clf', RandomForestClassifier(random_state=42, n_estimators=15))])
+                
+        self.classifier = classifier.fit(texts, labels)
+        return self.classifier
+        
+    def predict(self, texts):        
+        assert self.classifier != None
+        return self.classifier.predict(texts)
+        
+class NaiveClassifier(Classifier):
+    def __init__(self):
+        self.classifier = None
+        self.nsfw_words = set([])
+    
+    def train(self, texts, labels):
         with open('badwords.txt', 'r') as f:
             x = f.readlines()
-            #to remove \n from list elements    
-        b_words=list(map(str.strip,x))
+                        
+        self.nsfw_words = set(list(map(str.strip, x)))
+        
+    def predict(self, texts):                
         predicted = []
         for i in texts:
             currentWords = i.lower().split(" ")
-            if len(set(currentWords).intersection(set(b_words))) > 0:
+            if len(set(currentWords).intersection(self.nsfw_words)) > 0:
                 predicted.append(1)
             else:
                 predicted.append(0)
-        return(predicted)        
+        return predicted        

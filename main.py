@@ -66,7 +66,7 @@ def addonoffarg(parser, arg, dest=None, default=True, _help="TODO"):
     group.add_argument('--no-%s' % arg, dest=dest, action='store_false', default=default, help="See --%s" % arg)
 
 def main():
-    from classifier import LogisticRegressionClassifier as Classifier
+    from classifier import EnsembleVotingClassifier as Classifier
     
     parser = argparse.ArgumentParser(
         description="Classifying NSFW or not", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -85,10 +85,15 @@ def main():
     texts, labels = load_json(infile)
     
     lrc = Classifier()
-    lrc.train(texts, labels)
-    predictions = lrc.predict(texts)
+    lrc.train(texts[:8500], labels[:8500])
     
-    prediction_metrics(predictions, labels)
+    print("Train\n-------------")
+    predictions = lrc.predict(texts[:8500])    
+    prediction_metrics(predictions, labels[:8500])
+        
+    print("Test\n-------------")
+    predictions = lrc.predict(texts[8501:])    
+    prediction_metrics(predictions, labels[8501:])
     
 #     outfile = prepfile(args.outfile, 'w')
 #     for line in infile:

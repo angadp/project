@@ -5,7 +5,7 @@ Created on Nov 24, 2018
 
 from __future__ import print_function
 import praw, json
-NUM_REDDITS = 2500
+NUM_REDDITS = 200
 DEBUG = True
 from random import randint
 
@@ -36,16 +36,17 @@ class RedditStream:
         results = []
         for submission in self.reddit.subreddit(self.subreddit).stream.submissions():
             if not submission.stickied and submission.selftext:                
-                try:                     
-                    results.append({
-                        "title": self.cleanse(submission.title.decode('utf-8')),
-                        "text": self.cleanse(submission.selftext.decode('utf-8')),
-                        "NSFW": str(submission.over_18)
-                    })                    
-                    if DEBUG and randint(1,50) == 1:
-                        title = ("\t(NSFW) " if submission.over_18 else "\t(SFW)  ") + submission.title
-                        print(self.count, " " , title[:40] + ("..." if len(title) > 40 else ""))                   
-                    self.count += 1
+                try:
+                    if submission.over_18:                
+                        results.append({
+                            "title": self.cleanse(submission.title.decode('utf-8')),
+                            "text": self.cleanse(submission.selftext.decode('utf-8')),
+                            "NSFW": str(submission.over_18)
+                        })                    
+                        if DEBUG and self.count % 10 == 0: # randint(1,50) == 1:
+                            title = ("\t(NSFW) " if submission.over_18 else "\t(SFW)  ") + submission.title
+                            print(self.count, " " , title[:40] + ("..." if len(title) > 40 else ""))                   
+                        self.count += 1
                 except:
                     pass
                 
