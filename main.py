@@ -66,7 +66,7 @@ def addonoffarg(parser, arg, dest=None, default=True, _help="TODO"):
     group.add_argument('--no-%s' % arg, dest=dest, action='store_false', default=default, help="See --%s" % arg)
 
 def main():
-    from classifier import LinearSVM as Classifier
+    from classifier import LogisticRegressionClassifier as Classifier
     
     parser = argparse.ArgumentParser(
         description="Classifying NSFW or not", formatter_class=argparse.ArgumentDefaultsHelpFormatter)

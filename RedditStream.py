@@ -5,7 +5,7 @@ Created on Nov 24, 2018
 
 from __future__ import print_function
 import praw, json
-NUM_REDDITS = 1000
+NUM_REDDITS = 2500
 DEBUG = True
 from random import randint
 
@@ -42,7 +42,7 @@ class RedditStream:
                         "text": self.cleanse(submission.selftext.decode('utf-8')),
                         "NSFW": str(submission.over_18)
                     })                    
-                    if DEBUG and randint(1,100) == 1:
+                    if DEBUG and randint(1,50) == 1:
                         title = ("\t(NSFW) " if submission.over_18 else "\t(SFW)  ") + submission.title
                         print(self.count, " " , title[:40] + ("..." if len(title) > 40 else ""))                   
                     self.count += 1
@@ -53,12 +53,10 @@ class RedditStream:
         return results
     
     def cleanse(self, text):
-        return str(' '.join(filter(lambda x: x.isalnum(), text.split())))
-
-    @staticmethod
-    def flatten(item, tokenizer):
-        if item:
-            return item['title'] + "," + ' '.join(filter(lambda x: x.isalnum, item['text'].split())) + "," + str(item['NSFW']) + "\n"
+        text = text.strip().replace('_', ' ').replace("\\\\", "\\").replace('\n', ' ').replace('\\n', ' ')
+        return str(text.lower().decode('unicode-escape'))
+        
+#         return str(' '.join(filter(lambda x: x.isalnum(), text.split())))
     
     @staticmethod
     def jsonify(item):            
@@ -68,10 +66,13 @@ def main():
     redstr = RedditStream()
     
     with open("results.txt", "w") as res:
-        res.write("[")
+#         res.write("[")
+        results = []
         for item in redstr.stream_data():
-            res.write(RedditStream.jsonify(item))
-        res.write("]")
+            results.append(item)
+        res.write(json.dumps(results))
+#             res.write(RedditStream.jsonify(item))
+#         res.write("]")
     if DEBUG:
         print("\nCollected: ", redstr.count)
 
