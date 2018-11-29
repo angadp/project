@@ -17,16 +17,18 @@ class Classifier():
 
 
 class LinearSVM(Classifier):
-    def __init__(self):
+    def __init__(self, alpha=5e-5):
         self.classifier = None
+        self.alpha = alpha
 
     def train(self, texts, labels):
         from sklearn.feature_extraction.text import TfidfVectorizer
         from sklearn.linear_model import SGDClassifier
         from sklearn.pipeline import Pipeline
 
+        # best alpha=5e-5, n_iter=15, penalty='l2', random_state=42
         clf = Pipeline([('word_vec', TfidfVectorizer(lowercase=True, min_df=5, analyzer="word", ngram_range=(1, 3))),
-                         ('clf', SGDClassifier(alpha=5e-5, n_iter=15, penalty='l2', random_state=42))])
+                         ('clf', SGDClassifier(alpha=self.alpha, n_iter=15, penalty='l2', random_state=42))])
         self.classifier = clf.fit(texts, labels)
 
     def predict(self, words):

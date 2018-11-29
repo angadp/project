@@ -8,6 +8,7 @@ from __future__ import print_function
 import argparse
 import sys
 import codecs
+from classifier import NaiveClassifier
 if sys.version_info[0] == 2:
     from itertools import izip
 else:
@@ -38,10 +39,14 @@ def load_json(infile):
 
 def prediction_metrics(labels, truths):
     truths_np = np.array(truths)    
-    accuracy = np.mean(truths_np == labels)
     
-    print("Accuracy: ", accuracy)
-    print(metrics.classification_report(truths_np, labels, target_names=['SFW', 'NSFW']))
+#     accuracy = np.mean(truths_np == labels)    
+#     print("Accuracy: ", accuracy)
+
+    full_report = metrics.classification_report(truths_np, labels, target_names=['SFW', 'NSFW'])
+    print(full_report)
+#     report = metrics.f1_score(truths_np, labels)
+#     return report
     
     
 def prepfile(fh, code):
@@ -66,7 +71,6 @@ def addonoffarg(parser, arg, dest=None, default=True, _help="TODO"):
     group.add_argument('--no-%s' % arg, dest=dest, action='store_false', default=default, help="See --%s" % arg)
 
 def main():
-    from classifier import EnsembleVotingClassifier as Classifier
     
     parser = argparse.ArgumentParser(
         description="Classifying NSFW or not", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -74,16 +78,27 @@ def main():
     addonoffarg(parser, 'debug', _help="debug mode", default=False)
     parser.add_argument("--infile", "-i", nargs='?', type=argparse.FileType('r'), default=sys.stdin, help="input file")
     parser.add_argument("--outfile", "-o", nargs='?', type=argparse.FileType('w'), default=sys.stdout, help="output file")
-
+    parser.add_argument("--classifier", "-c", nargs='?', type=argparse.FileType('r'), default=1, help="Choose a classifier")
+    
     try:
         args = parser.parse_args()
     except IOError as msg:
         parser.error(str(msg))
-
-    infile = prepfile(args.infile, 'r')
     
+    c_type = args.classifier
+    if not c_type or c_type > 5: from classifier import NaiveClassifier as Classifier
+    elif c_type == 1: from classifier import LinearSVM as Classifier
+    elif c_type == 2: from classifier import LogisticRegressionClassifier as Classifier
+    elif c_type == 3: from classifier import AdaboostClassifier as Classifier
+    elif c_type == 4: from classifier import RandomForestClassifier as Classifier
+    elif c_type == 5: from classifier import EnsembleVotingClassifier as Classifier
+    
+    infile = prepfile(args.infile, 'r')
     texts, labels = load_json(infile)
     
+#     alphas = [1e-5, 2e-5, 3e-5, 4e-5, 5e-5, 6e-5, 7e-5, 8e-5, 9e-5, 1e-4, 1.1e-4, 1.2e-4, 1.3e-4, 1.4e-4, 1.5e-4]    
+#     for alpha in alphas:
+
     lrc = Classifier()
     lrc.train(texts[:8500], labels[:8500])
     
@@ -94,7 +109,7 @@ def main():
     print("Test\n-------------")
     predictions = lrc.predict(texts[8501:])    
     prediction_metrics(predictions, labels[8501:])
-    
+        
 #     outfile = prepfile(args.outfile, 'w')
 #     for line in infile:
 #         outfile.write(line)
