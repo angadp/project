@@ -8,7 +8,6 @@ from __future__ import print_function
 import argparse
 import sys
 import codecs
-from classifier import NaiveClassifier
 if sys.version_info[0] == 2:
     from itertools import izip
 else:
@@ -45,6 +44,7 @@ def prediction_metrics(labels, truths):
 
     full_report = metrics.classification_report(truths_np, labels, target_names=['SFW', 'NSFW'])
     print(full_report)
+    print(metrics.f1_score(truths_np, labels))
 #     report = metrics.f1_score(truths_np, labels)
 #     return report
     
@@ -78,7 +78,7 @@ def main():
     addonoffarg(parser, 'debug', _help="debug mode", default=False)
     parser.add_argument("--infile", "-i", nargs='?', type=argparse.FileType('r'), default=sys.stdin, help="input file")
     parser.add_argument("--outfile", "-o", nargs='?', type=argparse.FileType('w'), default=sys.stdout, help="output file")
-    parser.add_argument("--classifier", "-c", nargs='?', type=argparse.FileType('r'), default=1, help="Choose a classifier")
+    parser.add_argument("--classifier", "-c", nargs='?', type=int, default=1, help="Choose a classifier")
     
     try:
         args = parser.parse_args()
@@ -86,12 +86,24 @@ def main():
         parser.error(str(msg))
     
     c_type = args.classifier
-    if not c_type or c_type > 5: from classifier import NaiveClassifier as Classifier
-    elif c_type == 1: from classifier import LinearSVM as Classifier
-    elif c_type == 2: from classifier import LogisticRegressionClassifier as Classifier
-    elif c_type == 3: from classifier import AdaboostClassifier as Classifier
-    elif c_type == 4: from classifier import RandomForestClassifier as Classifier
-    elif c_type == 5: from classifier import EnsembleVotingClassifier as Classifier
+    if not c_type or c_type > 5: 
+        from classifier import NaiveClassifier as Classifier
+        print("Naive Classifier")
+    elif c_type == 1: 
+        from classifier import LinearSVM as Classifier
+        print("Linear SVM Classifier")
+    elif c_type == 2: 
+        from classifier import LogisticRegressionClassifier as Classifier
+        print("Logistic Regression Classifier")
+    elif c_type == 3: 
+        from classifier import AdaboostClassifier as Classifier
+        print("AdaBoost Classifier")
+    elif c_type == 4: 
+        from classifier import RandomForestClassifier as Classifier
+        print("Random Forest Classifier")
+    elif c_type == 5: 
+        from classifier import EnsembleVotingClassifier as Classifier
+        print("Ensemble Voting Classifier")
     
     infile = prepfile(args.infile, 'r')
     texts, labels = load_json(infile)
@@ -110,6 +122,7 @@ def main():
     predictions = lrc.predict(texts[8501:])    
     prediction_metrics(predictions, labels[8501:])
         
+#     print("[\"EnsembleVotingClassifier\"", ",", tr, ",", te, "]")
 #     outfile = prepfile(args.outfile, 'w')
 #     for line in infile:
 #         outfile.write(line)

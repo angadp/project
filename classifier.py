@@ -17,7 +17,7 @@ class Classifier():
 
 
 class LinearSVM(Classifier):
-    def __init__(self, alpha=5e-5):
+    def __init__(self, alpha=11e-5):
         self.classifier = None
         self.alpha = alpha
 
