@@ -27,10 +27,11 @@ def load_json(infile):
     texts, labels = [], []
     
     try:
-        for row in json.load(infile):
-            if len(row['text']) > 0:
-                texts.append(str(row['text']))
-                labels.append(1 if row['NSFW'] == "True" else 0)            
+        data = json.load(infile)
+        for row in data['corpus']:
+            if len(row['data']) > 0:
+                texts.append(str(row['data']))
+                labels.append(1 if row['label'] == "NSFW" else 0)  
     except Exception as e:
         print("Failed to load JSON data. ", e)
     
@@ -38,15 +39,10 @@ def load_json(infile):
 
 def prediction_metrics(labels, truths):
     truths_np = np.array(truths)    
-    
-#     accuracy = np.mean(truths_np == labels)    
-#     print("Accuracy: ", accuracy)
 
     full_report = metrics.classification_report(truths_np, labels, target_names=['SFW', 'NSFW'])
     print(full_report)
-    print(metrics.f1_score(truths_np, labels))
-#     report = metrics.f1_score(truths_np, labels)
-#     return report
+
     
     
 def prepfile(fh, code):
@@ -85,7 +81,7 @@ def main():
     except IOError as msg:
         parser.error(str(msg))
     
-    c_type = args.classifier
+    c_type = 3 #args.classifier
     if not c_type or c_type > 5: 
         from classifier import NaiveClassifier as Classifier
         print("Naive Classifier")
@@ -107,9 +103,6 @@ def main():
     
     infile = prepfile(args.infile, 'r')
     texts, labels = load_json(infile)
-    
-#     alphas = [1e-5, 2e-5, 3e-5, 4e-5, 5e-5, 6e-5, 7e-5, 8e-5, 9e-5, 1e-4, 1.1e-4, 1.2e-4, 1.3e-4, 1.4e-4, 1.5e-4]    
-#     for alpha in alphas:
 
     lrc = Classifier()
     lrc.train(texts[:8500], labels[:8500])
@@ -121,11 +114,6 @@ def main():
     print("Test\n-------------")
     predictions = lrc.predict(texts[8501:])    
     prediction_metrics(predictions, labels[8501:])
-        
-#     print("[\"EnsembleVotingClassifier\"", ",", tr, ",", te, "]")
-#     outfile = prepfile(args.outfile, 'w')
-#     for line in infile:
-#         outfile.write(line)
 
 if __name__ == '__main__':
     main()

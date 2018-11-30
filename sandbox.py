@@ -10,7 +10,7 @@ import json
 
 count = 0
 nsfw_data, all_data = [], []
-with open("nsfw.txt", 'w') as r5k:
+with open("final.json", 'w') as r5k:
     
 #     data = json.load(open("data/results_nsfw.txt", 'r'))
 #     for row in data:
@@ -20,18 +20,37 @@ with open("nsfw.txt", 'w') as r5k:
 #                 "NSFW": str(row['NSFW']),
 #                 "text": str(row['text'])
 #             })
-            
+    final = {
+        "description": ["Label headlines of Reddit posts as NSFW or not"],
+        "authors": {
+                "author1": "Ishank Mishra",
+                "author2": "Angadpreet Nagpal",
+                "author3": "Somesh Sakriya"
+            },
+        "emails": {
+                "email1": "imishra@usc.edu",
+                "email2": "asnagpal@usc.edu",
+                "email3": "sakriya@usc.edu"
+            }
+    }
+    
     data = json.load(open("data/results10k.txt", 'r'))
     for row in data:
-        count += 1
-        if row['NSFW'] == 'True':
-            all_data.append(str(row['text']))
-        
+#         count += 1
+        lab = "NSFW" if row['NSFW'] == "True" else "SFW"
+        all_data.append({
+            "label": str(lab),
+            "data": str(row['text'])
+        })
+    
+    final['corpus'] = all_data
+    
 #         if count % 48 == 0:
 #             if nsfw_data:
 #                 all_data.append(nsfw_data.pop())
             
-    r5k.write(json.dumps(all_data))
+    r5k.write(json.dumps(final))
+    
 print(len(all_data))
 
 

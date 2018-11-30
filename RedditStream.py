@@ -7,7 +7,6 @@ from __future__ import print_function
 import praw, json
 NUM_REDDITS = 200
 DEBUG = True
-from random import randint
 
 class RedditStream:
     def __init__(self, subreddit='all'):
@@ -56,9 +55,7 @@ class RedditStream:
     def cleanse(self, text):
         text = text.strip().replace('_', ' ').replace("\\\\", "\\").replace('\n', ' ').replace('\\n', ' ')
         return str(text.lower().decode('unicode-escape'))
-        
-#         return str(' '.join(filter(lambda x: x.isalnum(), text.split())))
-    
+            
     @staticmethod
     def jsonify(item):            
         return str(item) + ","
@@ -67,13 +64,10 @@ def main():
     redstr = RedditStream()
     
     with open("results.txt", "w") as res:
-#         res.write("[")
         results = []
         for item in redstr.stream_data():
             results.append(item)
         res.write(json.dumps(results))
-#             res.write(RedditStream.jsonify(item))
-#         res.write("]")
     if DEBUG:
         print("\nCollected: ", redstr.count)
 
