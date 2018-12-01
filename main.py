@@ -16,6 +16,7 @@ import os.path
 import gzip
 import numpy as np
 from sklearn import metrics
+SPLIT_RATIO = 0.774
 
 scriptdir = os.path.dirname(os.path.abspath(__file__))
 
@@ -65,7 +66,11 @@ def addonoffarg(parser, arg, dest=None, default=True, _help="TODO"):
     dest = arg if dest is None else dest
     group.add_argument('--%s' % arg, dest=dest, action='store_true', default=default, help=_help)
     group.add_argument('--no-%s' % arg, dest=dest, action='store_false', default=default, help="See --%s" % arg)
-
+    
+def get_split_pos(size):
+    return int(size * SPLIT_RATIO)
+    
+    
 def main():
     
     parser = argparse.ArgumentParser(
@@ -81,7 +86,7 @@ def main():
     except IOError as msg:
         parser.error(str(msg))
     
-    c_type = 3 #args.classifier
+    c_type = args.classifier
     if not c_type or c_type > 5: 
         from classifier import NaiveClassifier as Classifier
         print("Naive Classifier")
@@ -103,17 +108,19 @@ def main():
     
     infile = prepfile(args.infile, 'r')
     texts, labels = load_json(infile)
-
+    
+    s = get_split_pos(len(texts))
+    
     lrc = Classifier()
-    lrc.train(texts[:8500], labels[:8500])
+    lrc.train(texts[:s], labels[:s])
     
     print("Train\n-------------")
-    predictions = lrc.predict(texts[:8500])    
-    prediction_metrics(predictions, labels[:8500])
+    predictions = lrc.predict(texts[:s])    
+    prediction_metrics(predictions, labels[:s])
         
     print("Test\n-------------")
-    predictions = lrc.predict(texts[8501:])    
-    prediction_metrics(predictions, labels[8501:])
+    predictions = lrc.predict(texts[s:])    
+    prediction_metrics(predictions, labels[s:])
 
 if __name__ == '__main__':
     main()
