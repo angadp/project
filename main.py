@@ -16,7 +16,7 @@ import os.path
 import gzip
 import numpy as np
 from sklearn import metrics
-SPLIT_RATIO = 0.774
+SPLIT_RATIO = 0.7747
 
 scriptdir = os.path.dirname(os.path.abspath(__file__))
 
@@ -80,6 +80,7 @@ def main():
     parser.add_argument("--infile", "-i", nargs='?', type=argparse.FileType('r'), default=sys.stdin, help="input file")
     parser.add_argument("--outfile", "-o", nargs='?', type=argparse.FileType('w'), default=sys.stdout, help="output file")
     parser.add_argument("--classifier", "-c", nargs='?', type=int, default=1, help="Choose a classifier")
+    parser.add_argument("--badwords", "-b", nargs='?', type=argparse.FileType('r'), default=sys.stdout, help="badwords file")
     
     try:
         args = parser.parse_args()
